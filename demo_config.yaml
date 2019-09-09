@@ -1,0 +1,49 @@
+architecture:
+    output_channels : 2
+    input_shape : [256,256, 1]
+
+controller:
+    controller_host : 'd7920-12.ccds.io'
+    controller_port : 27021
+    controller_database : 'experiment_controller'
+    controller_collection: 'trial_XX'
+    controller_ssl_ca_file: '/mnt/netapp/workspace/pki/mongo/mongodb_serverCA.pem'
+    num_warm_up: 10
+    max_iter: 75
+    max_local_iter: 5
+
+hyperparameters:
+    param_1:
+        name: 'learning_rate'
+        type: 'discrete'
+        domain: (0.005, 0.001)
+        
+    param_3:
+        name: 'num_convs'
+        type: 'discrete'
+        domain: (1, 2)
+
+    param_4:
+        name: 'network'
+        type: 'discrete'
+        domain: (0,1,2,3,4)
+
+    param_5:
+        name: 'dropout'
+        type: 'discrete'
+        domain: (0, 0.1, 0.2)
+
+    param_6:
+        name: 'kernel'
+        type: 'discrete'
+        domain: (3, 5)
+    
+    param_8:
+        name: 'normalize'
+        type: 'discrete'
+        domain: (0, 1)
+        
+    param_9:
+        name: 'vertical_flip'
+        type: 'discrete'
+        domain: (0, 1)

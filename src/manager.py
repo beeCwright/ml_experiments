@@ -3,17 +3,10 @@ from tensorflow.keras.callbacks import Callback
 
 
 class ExperimentNamer:
-    '''
-    Desription: Class methods for naming experiments.  
-    Created: 18/11/21
-    Modified: 19/07/17
-    '''
+    '''Class methods for naming experiments.'''
     
     def __init__(self):
-        '''
-        Description: 
-        '''
-        # Instantiate the pool of names
+        '''Instantiate a list of experiment names.'''
         self.name_pool = ['ampere', 'aristotle', 'avogadro', 'bell', 'bengio', 'bernoulli', 'bohr', 
                          'boyle', 'braun', 'bunson', 'curie', 'dalton', 'darwin', 'dirac', 'edison', 
                          'einstein', 'euclid', 'euler', 'faraday', 'fermi', 'feynman', 'fisher', 
@@ -29,20 +22,17 @@ class ExperimentNamer:
     
     
     def get_used_names(self, df):
-        '''
-        Description: Get a list of all names in the field 'name' in a pandas dataframe
-        '''
+        '''Get a list of all names in the field 'name' in a pandas dataframe.'''
+
+        # There are no previous experiment names
         if len(df) == 0:
-            # There are no previous experiment names
             self.used_names = []
         else:
             self.used_names = list(df.experiment_name.values)
 
     
     def get_unused_names(self):
-        '''
-        Description: Get a list a names from the name pool that aren't in the used names
-        '''
+        '''Get a list a names from the name pool that aren't in the used names.'''
         
         self.unused_names = [name for name in self.name_pool if name not in self.used_names]
         
@@ -50,25 +40,19 @@ class ExperimentNamer:
         if len(self.unused_names) == 0:
             for i in range(10):
                 suffix = '_' + str(i)
-                self.unused_names = [name + suffix for name in self.name_pool if name + suffix not in self.used_names]
-    
-        
-        
+                self.unused_names = [name + suffix for name in self.name_pool]
+
+
     def get_random_unused_name(self):
-        '''
-        Description: Draw a random name that isn't already used, and pop it from the list
-        '''
+        ''' Draw a random name that isn't already used, and pop it from the list.'''
+        
         rand_idx = np.random.choice(len(self.unused_names), 1)[0]
         random_name = self.unused_names.pop(rand_idx)
         return random_name
     
     
 class ExperimentRecorder(Callback, ExperimentNamer, BaseReader, BaseConnection):
-    '''    
-    Desription: Class methods for recording experiments in mongo.
-    Created: 18/10/18
-    Modified: 19/08/05
-    '''
+    '''Class methods for recording experiments in mongo.'''
         
     def __init__(self, config_path):
         ExperimentNamer.__init__(self)
@@ -78,14 +62,17 @@ class ExperimentRecorder(Callback, ExperimentNamer, BaseReader, BaseConnection):
         # Establish connection with mongoDB
         self.establish_db_connection()        
         
-        self.start_recording = sefl.experiment['start_recording']
-        self.train_metric_name = None
-        
+        self.start_recording = self.experiment['start_recording']
+
+        if 'train_metric_name' in list(self.experiment.keys()):
+            if experiment['train_metric_name'] != None:
+                self.record_metrics = True
+                
         # Setup the ExperimentNamer to name this experiment        
         if self.experiment['namer']:
 
             # Get any previous experiment names
-            previous_experiments = list(self.db.col.find())   # all training runs in the trial
+            previous_experiments = list(self.col.find())   # all training runs in the trial
             df = pd.DataFrame(previous_experiments)   # store into a dataframe
 
             # Determine which names have been used
@@ -102,9 +89,9 @@ class ExperimentRecorder(Callback, ExperimentNamer, BaseReader, BaseConnection):
         self.loss = []
         self.val_loss = []
 
-        if experiment['train_metric_name'] != None:
-            self.train_metric_name = experiment['train_metric_name']
-            self.val_metric_name = 'val_' + experiment['train_metric_name']
+        if self.record_metrics
+            self.train_metric_name = self.experiment['train_metric_name']
+            self.val_metric_name = 'val_' + self.experiment['train_metric_name']
             self.train_metric = []
             self.val_metric = []
 
@@ -128,18 +115,17 @@ class ExperimentRecorder(Callback, ExperimentNamer, BaseReader, BaseConnection):
             self.create_experiment_entry()
 
     def on_epoch_end(self, epoch, logs={}):
-        
         # Minimally record the loss
         self.loss.append(logs.get('loss'))
         self.val_loss.append(logs.get('val_loss'))
         
         # Optionally record metrics
-        if self.experiment['train_metric_name'] != None:
-            self.train_metric.append(logs.get(self.train_metric_name))  # categorical_accuracy
-            self.val_metric.append(logs.get(self.val_metric_name))      # 'val_categorical_accuracy'
+
+                self.train_metric.append(logs.get(self.train_metric_name))
+                self.val_metric.append(logs.get(self.val_metric_name))
 
         if epoch >= self.start_recording:
-            if self.train_metric_name != None:
+            if self.record_metrics:
                 results = {'loss' : self.loss, 
                            'val_loss' : self.val_loss, 
                            self.train_metric_name : self.train_metric, 
