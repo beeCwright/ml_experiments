@@ -67,6 +67,8 @@ class ExperimentRecorder(Callback, ExperimentNamer, BaseReader, BaseConnection):
         if 'train_metric_name' in list(self.experiment.keys()):
             if experiment['train_metric_name'] != None:
                 self.record_metrics = True
+            else:
+                self.record_metrics = False
                 
         # Setup the ExperimentNamer to name this experiment        
         if self.experiment['namer']:
@@ -89,7 +91,7 @@ class ExperimentRecorder(Callback, ExperimentNamer, BaseReader, BaseConnection):
         self.loss = []
         self.val_loss = []
 
-        if self.record_metrics
+        if self.record_metrics:
             self.train_metric_name = self.experiment['train_metric_name']
             self.val_metric_name = 'val_' + self.experiment['train_metric_name']
             self.train_metric = []
@@ -120,9 +122,8 @@ class ExperimentRecorder(Callback, ExperimentNamer, BaseReader, BaseConnection):
         self.val_loss.append(logs.get('val_loss'))
         
         # Optionally record metrics
-
-                self.train_metric.append(logs.get(self.train_metric_name))
-                self.val_metric.append(logs.get(self.val_metric_name))
+        self.train_metric.append(logs.get(self.train_metric_name))
+        self.val_metric.append(logs.get(self.val_metric_name))
 
         if epoch >= self.start_recording:
             if self.record_metrics:

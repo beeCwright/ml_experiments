@@ -106,8 +106,9 @@ def get_trial(one_trial):
 
 
 if __name__ == '__main__':
-    
+
     config = './ml_experiments/demo_config.yaml'
+    config = './ml_experiments/demo_config_small.yaml'
     controller = me.ExperimentController(config)
 
     local_iter = 0
