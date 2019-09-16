@@ -3,14 +3,14 @@ architecture:
     input_shape : [256,256, 1]
 
 controller:
-    controller_host : 'd7920-12.ccds.io'
-    controller_port : 27021
-    controller_database : 'experiment_controller'
-    controller_collection: 'trial_XX'
-    controller_ssl_ca_file: '/mnt/netapp/workspace/pki/mongo/mongodb_serverCA.pem'
-    num_warm_up: 10
-    max_iter: 75
-    max_local_iter: 5
+    controller_host : 'd7920-12.ccds.io'                                                  # required
+    controller_port : 27021                                                               # required
+    controller_database : 'experiment_controller'                                         # required
+    controller_collection: 'trial_XX'                                                     # required
+    controller_ssl_ca_file: '/mnt/netapp/workspace/pki/mongo/mongodb_serverCA.pem'        # required
+    num_warm_up: 10                                                                       # required
+    max_iter: 75                                                                          # required
+    max_local_iter: 5                                                                     # required
 
 hyperparameters:
     param_1:

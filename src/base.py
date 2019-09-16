@@ -19,7 +19,6 @@ class BaseConnection:
                      ssl_ca_certs=self.experiment['{}_ssl_ca_file'.format(prefix)],
                      port=self.experiment['{}_port'.format(prefix)])
         
-        
         self.db = client[self.experiment['{}_database'.format(prefix)]]
         self.col = self.db[self.experiment['{}_collection'.format(prefix)]]        
 
