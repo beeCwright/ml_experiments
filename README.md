@@ -23,7 +23,7 @@ sudo docker pull mongo
  - Generate certificates, making sure to replace the Common Name (CN) attribute with the host name where mongo will be running.
 
 ``` sh
-# Generate Root Certiicate and Root Key
+# Generate Root Certificate and Root Key
 $ openssl req -out rootCA.pem -keyout rootKey.pem -new -x509 -days 3650 -nodes -subj "/C=US/ST=MA/O=CCDS/CN=root"
 
 # Generate Server key and Signed Certificates
