@@ -23,7 +23,7 @@ sudo docker pull mongo
  - Generate certificates, making sure to replace the Common Name (CN) attribute with the host name where mongo will be running.
 
 ``` sh
-# Generate Root Certiicate and Root Key
+# Generate Root Certificate and Root Key
 $ openssl req -out rootCA.pem -keyout rootKey.pem -new -x509 -days 3650 -nodes -subj "/C=US/ST=MA/O=CCDS/CN=root"
 
 # Generate Server key and Signed Certificates
@@ -62,7 +62,7 @@ $ sudo docker run -dit -p 27021:27017 -v /path/to/keys/dir:/mnt/certs/ mongo /bi
 
 ### Usage
 
- - Create a controller instance which will read a yaml configuration file, and get the latest experiment updates, or create an experiment entry is none exists.
+ - Create a controller instance which will read a yaml configuration file, and get the latest experiment updates, or create an experiment entry if none exists.
 
 ``` python
 import ml_experiments as me
@@ -88,6 +88,7 @@ controller.bounds
  - After `num_warm_up` iterations have passed, the GPyOpt library is used to recommend the next trial.
 
 ``` python
+local_iter = 0
 current_iter = controller.next_iter
 while (current_iter < controller.max_iter) and (local_iter < controller.max_local_iter):
 
