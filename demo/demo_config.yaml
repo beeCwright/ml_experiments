@@ -1,6 +1,8 @@
 architecture:
     output_channels : 2
     input_shape : [256,256, 1]
+    a_test_argument_1: 'None'
+    a_test_argument_2: 'None'
 
 controller:
     controller_host : 'd7920-12.ccds.io'                                                  # required

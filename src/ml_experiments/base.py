@@ -13,7 +13,14 @@ class BaseConnection:
         -----------
         prefix : str
             Which database service to connect to, references yaml config
-        '''
+`        '''
+
+        # Check that all needed values are in the experiment configuration.
+        required_vals = [prefix + '_host', prefix + '_ssl_ca_file', prefix + '_database', prefix + '_collection', prefix + '_port']
+        experiment_key_list = list(self.experiment.keys())
+        for rv in required_vals:
+            assert rv in experiment_key_list, '{} {}'.format(rv, ' must be set in the experiment config yaml.')
+
         client = MongoClient(host=self.experiment['{}_host'.format(prefix)],
                      ssl=True,
                      ssl_ca_certs=self.experiment['{}_ssl_ca_file'.format(prefix)],
@@ -29,28 +36,33 @@ class BaseReader:
     def get_config(self, config):
         '''Read yaml config file, and create the experiment dictionary, and hyperparameter bounds.'''
 
-        self.config_dict = yaml.load(open(config, 'r'))
+        self._load_config(config)
         self._bundle_experiment()
+        self._fix_none()
         self._bundle_hyperparameters()
+
+
+    def _load_config(self, config):
+        ''' Load the yaml config file. '''
+        self.config_dict = yaml.load(open(config, 'r'))
 
 
     def _bundle_experiment(self):
         ''' Merge a dictionary of dictionaries into a single dictionary. Don't include the hyperparameters. '''
         
-        config_keys = list(self.config_dict.keys())
+        self.config_keys = list(self.config_dict.keys())
         
-        # Remove hyperparameters from the experiment configutation
-        if 'hyperparameters' in config_keys:
-            config_keys.pop(config_keys.index('hyperparameters'))
+        # Remove hyperparameters from the experiment configuration
+        if 'hyperparameters' in self.config_keys:
+            self.config_keys.pop(self.config_keys.index('hyperparameters'))
             
-        experiment = self.config_dict[config_keys[0]]
+        # Take the first heading of parameters to initalize the experiment
+        experiment = self.config_dict[self.config_keys[0]]
         
-        # Flatten the experiment headings
-        for d in config_keys[1:]:
+        # Take the rest of the headings and merge them the rest of the experiment
+        for d in self.config_keys[1:]:
             experiment = self._merge_two_dicts(experiment, self.config_dict[d])
         self.experiment = experiment
-
-        self._fix_none()
 
 
     def _merge_two_dicts(self, x, y):
@@ -113,6 +125,8 @@ class BaseReader:
 
             self.hyperparameter_names = ordered_names
             self.bounds = ordered_bounds
-            
-            
-    
+
+        for b in self.bounds:
+            assert type(b['domain']) == tuple, 'Hyperparameter domain values must be of type tuple.'
+            assert type(b['name']) == str, 'Hyperparameter name values must be of type str'
+            assert b['type'] in ['discrete', 'continuous'], 'Hyperparameter type values must be str and either {discrete, continuous}'
