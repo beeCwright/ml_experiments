@@ -5,19 +5,6 @@ from heka.models.networks.unet import UNetConfig, get_unet
 
 # To run move this file so the ml_experiments is a child directory
 
-def get_model(experiment, get_model_func):
-    '''Get a UNet using the experiment parameters.'''
-    
-    # Get the model, match parameters from experiment with the func signature, otherwise use the defaults
-    with tf.device('/cpu:0'):            
-        mm = me.ModelModifier(get_model_func, experiment)
-        mm.get_network_signature()
-        mm.fill_default_parameters()
-        mm.find_matching_parameters()
-        model = mm.get_model()
-        model = get_unet(model)
-    return model
-
 
 def set_trial(x, experiment, hyperparameter_names):
     ''' GPyOpt recommends experiments to be performed next to guide 

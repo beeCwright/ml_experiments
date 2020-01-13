@@ -19,6 +19,11 @@ class ExperimentController(BaseReader, BaseConnection):
         '''
         self.get_config(config_path) # inherited method, read yaml config
 
+        experiment_keys = list(self.experiment.keys())
+        assert 'max_iter' in experiment_keys, 'max_iter is a required parameter in the .yaml config.'
+        assert 'max_local_iter' in experiment_keys, 'max_local_iter is a required parameter in the .yaml config.'
+        assert 'num_warm_up' in experiment_keys, 'num_warm_up is a required parameter in the .yaml config.'
+
         self.max_iter = self.experiment['max_iter']
         self.max_local_iter = self.experiment['max_local_iter']
         self.num_warm_up = self.experiment['num_warm_up']
@@ -31,17 +36,17 @@ class ExperimentController(BaseReader, BaseConnection):
     def _get_design(self):
         ''' Get the latest updated experiment. '''
         
-        # Retrieve existing design
-        if self.col.count() == 1:
+        # Retrieve the existing design
+        if self.col.estimated_document_count() == 1:
             self.raster = self.col.find_one()
-            self.warm_up_list = self.raster['warm_up_list']
             self.raster_id = self.raster['_id']
-            self.next_iter = self.raster['next_iter']
             self.X_steps = self.raster['X_steps']
             self.Y_steps = self.raster['Y_steps']
-
+            self.next_iter = self.raster['next_iter']
+            self.warm_up_list = self.raster['warm_up_list']
+            
         # Create a new design
-        elif self.col.count() == 0:
+        elif self.col.estimated_document_count() == 0:
             self._create_design_entry()
 
         else:
@@ -54,13 +59,15 @@ class ExperimentController(BaseReader, BaseConnection):
         # Determine the dimensionality of each hyperparameter
         experiment_dimensions = []        
         for i in self.bounds:
-            experiment_dimensions.append(len(i['domain']))
+            experiment_dimensions.append(len(i['domain'])) # list of counts of dimensions per hyperparameter
             
         warm_up_array = np.zeros((self.num_warm_up, len(experiment_dimensions)))
         
-        # Populate the warm up table
+        # Populate the warm up table (each row is an experiment, each column is a hyperparameter)
         for i in range(self.num_warm_up):
             for j, dim in enumerate(experiment_dimensions):
+
+                # Draw a random sample for this hyperparameter from its domain
                 this_dimensions_sample = np.random.choice(dim, 1)
                 warm_up_array[i][j] = self.bounds[j]['domain'][this_dimensions_sample[0]]
                 
@@ -111,10 +118,13 @@ class ExperimentController(BaseReader, BaseConnection):
         next_trial : array
             1D array of encoded hyperparameter combinations
         '''
+        assert self.X_steps != [], 'X_steps cannot be an empty list'
+        assert self.Y_steps != [], 'Y_steps cannot be an empty list'
+
         b_opt = GPyOpt.methods.BayesianOptimization(f=None, 
                                             domain=self.bounds, 
                                             X = np.array(self.X_steps),
-                                            Y = np.array(self.Y_steps))
+                                            Y = self.Y_steps)
         
         x_next = b_opt.suggest_next_locations(ignored_X=self.ignored_experiments)
         next_trial = x_next[0]
@@ -141,9 +151,12 @@ class ExperimentController(BaseReader, BaseConnection):
         ----------
         x_step : array
             1D array of encoded hyperparameter combinations
-        y_step: float
+        y_step: list
             value (loss) of objective function being optimzied over
         '''
+        assert type(y_step) == list
+        assert type(x_step) == numpy.ndarray
+
         self._get_design()
 
         self.X_steps.append(list(x_step))
