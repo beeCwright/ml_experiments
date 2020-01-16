@@ -1,4 +1,5 @@
 import os
+import ssl
 import yaml
 import numpy as np
 from ast import literal_eval
@@ -16,13 +17,21 @@ class BaseConnection:
 `        '''
 
         # Check that all needed values are in the experiment configuration.
-        required_vals = [prefix + '_host', prefix + '_ssl_ca_file', prefix + '_database', prefix + '_collection', prefix + '_port']
+        required_vals = [prefix + '_host', 
+                         prefix + '_ssl_ca_file', 
+                         prefix + '_database', 
+                         prefix + '_collection', 
+                         prefix + '_port',
+                         prefix + '_ssl_certfile']
+        
         experiment_key_list = list(self.experiment.keys())
         for rv in required_vals:
             assert rv in experiment_key_list, '{} {}'.format(rv, ' must be set in the experiment config yaml.')
 
         client = MongoClient(host=self.experiment['{}_host'.format(prefix)],
                      ssl=True,
+                     ssl_cert_reqs=ssl.CERT_REQUIRED,
+                     ssl_certfile=self.experiment['{}_ssl_certfile'.format(prefix)],
                      ssl_ca_certs=self.experiment['{}_ssl_ca_file'.format(prefix)],
                      port=self.experiment['{}_port'.format(prefix)])
         

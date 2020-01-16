@@ -6,10 +6,11 @@ architecture:
 
 controller:
     controller_host : 'd7920-12.ccds.io'                                                  # required
-    controller_port : 27021                                                               # required
-    controller_database : 'experiment_controller'                                         # required
-    controller_collection: 'trial_XX'                                                     # required
-    controller_ssl_ca_file: '/mnt/netapp/workspace/pki/mongo/mongodb_serverCA.pem'        # required
+    controller_port : 27024                                                               # required
+    controller_database : 'test_databases'                                                # required
+    controller_collection: 'test_collection'                                              # required
+    controller_ssl_certfile: './pki/client.pem'                                           # required
+    controller_ssl_ca_file: './pki/rootCA.pem'                                            # required
     num_warm_up: 10                                                                       # required
     max_iter: 75                                                                          # required
     max_local_iter: 5                                                                     # required

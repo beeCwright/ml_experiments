@@ -1,3 +1,6 @@
+import numpy as np
+import pkg_resources
+import pandas as pd
 from .base import BaseConnection, BaseReader
 from tensorflow.keras.callbacks import Callback
 
@@ -6,23 +9,20 @@ class ExperimentNamer:
     '''Class methods for naming experiments.'''
     
     def __init__(self):
-        '''Instantiate a list of experiment names.'''
-        self.name_pool = ['ampere', 'aristotle', 'avogadro', 'bell', 'bengio', 'bernoulli', 'bohr', 
-                         'boyle', 'braun', 'bunson', 'curie', 'dalton', 'darwin', 'dirac', 'edison', 
-                         'einstein', 'euclid', 'euler', 'faraday', 'fermi', 'feynman', 'fisher', 
-                         'fleming', 'gauss', 'gibbs', 'hawking', 'heisenberg', 'hertz', 'hewish', 
-                         'hilbert', 'hinton', 'hubble', 'hodgkin', 'hooke', 'hypatia', 'ising', 'joule', 
-                         'kaku', 'karpathy', 'kepler', 'kirchoff', 'lagrange', 'lamarck', 'laplace', 
-                         'lecun', 'leibniz', 'maxwell', 'mendel', 'minsky', 'nakaya', 'natta', 'newton',
-                         'nightingale', 'nobel', 'nye', 'ohm', 'oppenheimer', 'pascal', 'planck', 
-                         'pythagoras', 'ray', 'riemann', 'sagan', 'schottky', 'schrodinger', 'seaborg',
-                         'somerville', 'steno', 'shoemaker', 'simpson', 'stevens', 'tartaglia', 'teller',
-                         'tesla', 'thompson', 'toricelli', 'townes', 'turing', 'tyson', 'urey', 'venter', 
-                         'virchow', 'volta', 'wald', 'wallace', 'watt', 'wheeler', 'willis', 'wilson', 'wright']
+        '''Get a list of experiment names.'''
+        path = '/names.csv'
+        filepath = pkg_resources.resource_filename(__name__, path)
+        self.name_pool = list(pd.read_csv(filepath)['name'].values)
     
     
     def get_used_names(self, df):
-        '''Get a list of all names in the field 'name' in a pandas dataframe.'''
+        '''Get a list of all names in the field 'name' in a pandas dataframe.
+
+        Parameters:
+        -----------
+        df (pd.DataFrame): dataframe where each row is an experiment
+
+        '''
 
         # There are no previous experiment names
         if len(df) == 0:
@@ -32,7 +32,9 @@ class ExperimentNamer:
 
     
     def get_unused_names(self):
-        '''Get a list a names from the name pool that aren't in the used names.'''
+        '''
+        Get a list a names from the name pool that aren't in the used names.
+        '''
         
         self.unused_names = [name for name in self.name_pool if name not in self.used_names]
         
@@ -55,47 +57,50 @@ class ExperimentRecorder(Callback, ExperimentNamer, BaseReader, BaseConnection):
     '''Class methods for recording experiments in mongo.'''
         
     def __init__(self, config_path):
+        
+        # Instantiate the experiment namer and name pool
         ExperimentNamer.__init__(self)
 
+        # Get the experiment configuration inherited from BaseReader
         self.get_config(config_path)
 
         # Establish connection with mongoDB
-        self.establish_db_connection()        
+        assert 'prefix' in list(self.experiment.keys()), 'A database prefix name must be included in the experiment yaml.'
+        self.establish_db_connection(self.experiment['prefix']) 
         
+        # Establish which epoch to start recording values
         self.start_recording = self.experiment['start_recording']
 
+        # Establish additional training metrics to record
+        # TODO: expand to allow training metrics, right now can only handle one
         if 'train_metric_name' in list(self.experiment.keys()):
             if experiment['train_metric_name'] != None:
                 self.record_metrics = True
+                self.train_metric_name = self.experiment['train_metric_name']
+                self.val_metric_name = 'val_' + self.experiment['train_metric_name']
+                self.train_metric = []
+                self.val_metric = []
             else:
                 self.record_metrics = False
-                
-        # Setup the ExperimentNamer to name this experiment        
-        if self.experiment['namer']:
 
-            # Get any previous experiment names
-            previous_experiments = list(self.col.find())   # all training runs in the trial
-            df = pd.DataFrame(previous_experiments)   # store into a dataframe
+        # Get any previous experiment names
+        previous_experiments = list(self.col.find())
+        df = pd.DataFrame(previous_experiments)
 
-            # Determine which names have been used
-            self.get_used_names(df)
-            self.get_unused_names()
+        # Determine which names have been used
+        self.get_used_names(df)
+        self.get_unused_names()
 
-            # Draw a random name to call this experiment
-            this_experiment_name = self.get_random_unused_name()
-            self.experiment['experiment_name'] = this_experiment_name            
-            print('{:12} {} {}'.format('', 'this is experiment is called: ', this_experiment_name))
-            print('{:12} {} {} {}'.format('', 'WARNING', len(self.unused_names), 'experiment names remaining'))
+        # Draw a random name to call this experiment
+        this_experiment_name = self.get_random_unused_name()
+        self.experiment['experiment_name'] = this_experiment_name
+        print('{:12} {} {}'.format('', 'this experiment is called: ', this_experiment_name))
+        print('{:12} {} {} {}'.format('', 'WARNING', len(self.unused_names), 'experiment names remaining'))
 
         # Initalize empty lists for loss values
         self.loss = []
         self.val_loss = []
 
-        if self.record_metrics:
-            self.train_metric_name = self.experiment['train_metric_name']
-            self.val_metric_name = 'val_' + self.experiment['train_metric_name']
-            self.train_metric = []
-            self.val_metric = []
 
     def _merge_two_dicts(self, x, y):
         z = x.copy()
