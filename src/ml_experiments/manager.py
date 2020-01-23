@@ -1,3 +1,4 @@
+import datetime
 import numpy as np
 import pkg_resources
 import pandas as pd
@@ -65,16 +66,16 @@ class ExperimentRecorder(Callback, ExperimentNamer, BaseReader, BaseConnection):
         self.get_config(config_path)
 
         # Establish connection with mongoDB
-        assert 'prefix' in list(self.experiment.keys()), 'A database prefix name must be included in the experiment yaml.'
-        self.establish_db_connection(self.experiment['prefix']) 
+        self.establish_db_connection('manager')
         
         # Establish which epoch to start recording values
+        assert 'start_recording' in list(self.experiment.keys()), 'A start_recording value must be included in the experiment yaml.'
         self.start_recording = self.experiment['start_recording']
 
         # Establish additional training metrics to record
         # TODO: expand to allow training metrics, right now can only handle one
         if 'train_metric_name' in list(self.experiment.keys()):
-            if experiment['train_metric_name'] != None:
+            if self.experiment['train_metric_name'] != None:
                 self.record_metrics = True
                 self.train_metric_name = self.experiment['train_metric_name']
                 self.val_metric_name = 'val_' + self.experiment['train_metric_name']
@@ -123,12 +124,13 @@ class ExperimentRecorder(Callback, ExperimentNamer, BaseReader, BaseConnection):
 
     def on_epoch_end(self, epoch, logs={}):
         # Minimally record the loss
-        self.loss.append(logs.get('loss'))
-        self.val_loss.append(logs.get('val_loss'))
+        self.loss.append(logs['loss'])
+        self.val_loss.append(logs['val_loss'])
         
         # Optionally record metrics
-        self.train_metric.append(logs.get(self.train_metric_name))
-        self.val_metric.append(logs.get(self.val_metric_name))
+        if hasattr(self, 'train_metric_name'):
+            self.train_metric.append(logs.get(self.train_metric_name))
+            self.val_metric.append(logs.get(self.val_metric_name))
 
         if epoch >= self.start_recording:
             if self.record_metrics:

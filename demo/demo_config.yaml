@@ -4,16 +4,28 @@ architecture:
     a_test_argument_1: 'None'
     a_test_argument_2: 'None'
 
+metrics:
+    train_metric_name: dice
+
 controller:
     controller_host : 'd7920-12.ccds.io'                                                  # required
     controller_port : 27024                                                               # required
     controller_database : 'test_databases'                                                # required
-    controller_collection: 'test_collection'                                              # required
+    controller_collection: 'test_design'                                                  # required
     controller_ssl_certfile: './pki/client.pem'                                           # required
     controller_ssl_ca_file: './pki/rootCA.pem'                                            # required
     num_warm_up: 10                                                                       # required
     max_iter: 75                                                                          # required
-    max_local_iter: 5                                                                     # required
+    max_local_iter: 5 # required
+    
+manager:
+    manager_host : 'd7920-12.ccds.io'                                                  # required
+    manager_port : 27024                                                               # required
+    manager_database : 'test_databases'                                                # required
+    manager_collection: 'test_trial'                                                   # required
+    manager_ssl_certfile: './pki/client.pem'                                           # required
+    manager_ssl_ca_file: './pki/rootCA.pem'                                            # required
+    start_recording: 5
 
 hyperparameters:
     param_1:
