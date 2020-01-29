@@ -3,7 +3,6 @@ import numpy as np
 import pkg_resources
 import pandas as pd
 from .base import BaseConnection, BaseReader
-from tensorflow.keras.callbacks import Callback
 
 
 class ExperimentNamer:
@@ -54,7 +53,7 @@ class ExperimentNamer:
         return random_name
     
     
-class ExperimentRecorder(Callback, ExperimentNamer, BaseReader, BaseConnection):
+class ExperimentRecorder(ExperimentNamer, BaseReader, BaseConnection):
     '''Class methods for recording experiments in mongo.'''
         
     def __init__(self, config_path):
@@ -118,7 +117,7 @@ class ExperimentRecorder(Callback, ExperimentNamer, BaseReader, BaseConnection):
         self.db.col.update_one({'_id' : self.entry_id.inserted_id}, {'$set' : results})
         print('Experiment results succesfully recorded.')
 
-    def on_epoch_begin(self, epoch, logs={}):
+    def on_epoch_begin(self, epoch):
         if epoch == self.start_recording:
             self.create_experiment_entry()
 
@@ -129,8 +128,8 @@ class ExperimentRecorder(Callback, ExperimentNamer, BaseReader, BaseConnection):
         
         # Optionally record metrics
         if hasattr(self, 'train_metric_name'):
-            self.train_metric.append(logs.get(self.train_metric_name))
-            self.val_metric.append(logs.get(self.val_metric_name))
+            self.train_metric.append(logs[self.train_metric_name])
+            self.val_metric.append(logs[self.val_metric_name])
 
         if epoch >= self.start_recording:
             if self.record_metrics:
