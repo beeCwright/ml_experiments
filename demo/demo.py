@@ -1,10 +1,8 @@
 import numpy as np
 import tensorflow as tf
 import ml_experiments as me
-from heka.models.networks.unet import UNetConfig, get_unet
 
 # To run move this file so the ml_experiments is a child directory
-
 
 def set_trial(x, experiment, hyperparameter_names):
     ''' GPyOpt recommends experiments to be performed next to guide 
@@ -74,11 +72,12 @@ def get_trial(one_trial):
     this_experiment = set_trial(one_trial, controller.experiment, controller.hyperparameter_names)
     
     # Match the parameters in experiment with parameters in the model func signature
-    model = get_model(this_experiment, UNetConfig)
+    # model = get_model(this_experiment, UNetConfig)
     
     
     # Run your model
     # val_loss = eval_trial(model)
+    
     val_loss = [4,5,3,10,4,3,2,1,1,1]
     
     # Lightly smooth the loss to avoid large spikes
@@ -95,7 +94,6 @@ def get_trial(one_trial):
 if __name__ == '__main__':
 
     config = './ml_experiments/demo_config.yaml'
-    config = './ml_experiments/demo_config_small.yaml'
     controller = me.ExperimentController(config)
 
     local_iter = 0
