@@ -110,7 +110,7 @@ class ExperimentRecorder(ExperimentNamer, BaseReader, BaseConnection):
     def create_experiment_entry(self):
         date = {'date_created' : datetime.datetime.utcnow()}
         experiment = self._merge_two_dicts(self.experiment, date)
-        self.entry_id = self.db.col.insert_one(experiment)
+        self.entry_id = self.col.insert_one(experiment)
         print('Created experiment entry: ', self.entry_id.inserted_id)
 
     def update_experiment_results(self, results):
