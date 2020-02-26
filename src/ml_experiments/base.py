@@ -47,6 +47,7 @@ class BaseReader:
 
         self._load_config(config)
         self._bundle_experiment()
+        self._set_config_name(config)        
         self._fix_none()
         self._bundle_hyperparameters()
 
@@ -55,7 +56,13 @@ class BaseReader:
         ''' Load the yaml config file. '''
         self.config_dict = yaml.load(open(config, 'r'))
 
-
+    def _set_config_name(self, config):
+        '''
+        Description: Record the filename of the config yaml file        
+        '''
+        yaml_file_name = os.path.split(config)[-1].split('.')[0]
+        self.experiment['trial_name'] = yaml_file_name
+        
     def _bundle_experiment(self):
         ''' Merge a dictionary of dictionaries into a single dictionary. Don't include the hyperparameters. '''
         
