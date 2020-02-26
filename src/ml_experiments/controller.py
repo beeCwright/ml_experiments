@@ -155,7 +155,7 @@ class ExperimentController(BaseReader, BaseConnection):
             value (loss) of objective function being optimzied over
         '''
         assert type(y_step) == list
-        assert type(x_step) == numpy.ndarray
+        assert type(x_step) == np.ndarray
 
         self._get_design()
 
