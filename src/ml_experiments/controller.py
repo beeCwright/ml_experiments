@@ -1,4 +1,5 @@
 import GPy, GPyOpt
+import numpy
 import numpy as np
 from .base import BaseReader, BaseConnection
 
@@ -155,7 +156,7 @@ class ExperimentController(BaseReader, BaseConnection):
             value (loss) of objective function being optimzied over
         '''
         assert type(y_step) == list
-        assert type(x_step) == np.ndarray
+        assert type(x_step) == numpy.ndarray
 
         self._get_design()
 
