@@ -117,7 +117,7 @@ class ExperimentRecorder(ExperimentNamer, BaseReader, BaseConnection, Callback):
         self.col.update_one({'_id' : self.entry_id.inserted_id}, {'$set' : results})
         print('Experiment results succesfully recorded.')
 
-    def on_epoch_begin(self, epoch):
+    def on_epoch_begin(self, epoch, logs=None):
         if epoch == self.start_recording:
             self.create_experiment_entry()
 
