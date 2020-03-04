@@ -3,7 +3,7 @@ import numpy as np
 import pkg_resources
 import pandas as pd
 from .base import BaseConnection, BaseReader
-
+from tensorflow.keras.callbacks import Callback
 
 class ExperimentNamer:
     '''Class methods for naming experiments.'''
@@ -53,7 +53,7 @@ class ExperimentNamer:
         return random_name
     
     
-class ExperimentRecorder(ExperimentNamer, BaseReader, BaseConnection):
+class ExperimentRecorder(ExperimentNamer, BaseReader, BaseConnection, Callback):
     '''Class methods for recording experiments in mongo.'''
         
     def __init__(self, config_path):
