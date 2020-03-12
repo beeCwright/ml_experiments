@@ -131,8 +131,8 @@ class ExperimentRecorder(ExperimentNamer, BaseReader, BaseConnection, Callback):
         
         # Optionally record metrics
         if hasattr(self, 'train_metric_name'):
-            self.train_metric.append(logs[self.train_metric_name])
-            self.val_metric.append(logs[self.val_metric_name])
+            self.train_metric.append(np.float64(logs[self.train_metric_name]))
+            self.val_metric.append(np.float64(logs[self.val_metric_name]))
 
         if epoch >= self.start_recording:
             if self.record_metrics:
