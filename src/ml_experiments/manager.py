@@ -3,7 +3,7 @@ import numpy as np
 import pkg_resources
 import pandas as pd
 from .base import BaseConnection, BaseReader
-from tensorflow.keras.callbacks import Callback
+
 
 class ExperimentNamer:
     '''Class methods for naming experiments.'''
@@ -53,19 +53,16 @@ class ExperimentNamer:
         return random_name
     
     
-class ExperimentRecorder(ExperimentNamer, BaseReader, BaseConnection, Callback):
+class ExperimentRecorder(ExperimentNamer, BaseReader, BaseConnection):
     '''Class methods for recording experiments in mongo.'''
         
-    def __init__(self, config_path, experiment=None):
+    def __init__(self, config_path):
         
         # Instantiate the experiment namer and name pool
         ExperimentNamer.__init__(self)
 
         # Get the experiment configuration inherited from BaseReader
         self.get_config(config_path)
-        
-        if experiment != None:
-            self.experiment = experiment
 
         # Establish connection with mongoDB
         self.establish_db_connection('manager')
@@ -74,17 +71,11 @@ class ExperimentRecorder(ExperimentNamer, BaseReader, BaseConnection, Callback):
         assert 'start_recording' in list(self.experiment.keys()), 'A start_recording value must be included in the experiment yaml.'
         self.start_recording = self.experiment['start_recording']
 
-        # Establish additional training metrics to record
-        # TODO: expand to allow training metrics, right now can only handle one
-        if 'train_metric_name' in list(self.experiment.keys()):
-            if self.experiment['train_metric_name'] != None:
-                self.record_metrics = True
-                self.train_metric_name = self.experiment['train_metric_name']
-                self.val_metric_name = 'val_' + self.experiment['train_metric_name']
-                self.train_metric = []
-                self.val_metric = []
-        else:
-            self.record_metrics = False
+        self.results = {}
+        for name in self.experiment['train_metrics']:
+            self.results[name] = []
+            self.results['val_' + name] = []
+
 
         # Get any previous experiment names
         previous_experiments = list(self.col.find())
@@ -120,27 +111,16 @@ class ExperimentRecorder(ExperimentNamer, BaseReader, BaseConnection, Callback):
         self.col.update_one({'_id' : self.entry_id.inserted_id}, {'$set' : results})
         print('Experiment results succesfully recorded.')
 
-    def on_epoch_begin(self, epoch, logs=None):
+        
+    def on_epoch_begin(self, epoch):
         if epoch == self.start_recording:
             self.create_experiment_entry()
 
+            
     def on_epoch_end(self, epoch, logs={}):
-        # Minimally record the loss
-        self.loss.append(logs['loss'])
-        self.val_loss.append(logs['val_loss'])
-        
-        # Optionally record metrics
-        if hasattr(self, 'train_metric_name'):
-            self.train_metric.append(np.float64(logs[self.train_metric_name]))
-            self.val_metric.append(np.float64(logs[self.val_metric_name]))
-
         if epoch >= self.start_recording:
-            if self.record_metrics:
-                results = {'loss' : self.loss, 
-                           'val_loss' : self.val_loss, 
-                           self.train_metric_name : self.train_metric, 
-                           self.val_metric_name : self.val_metric}
-            else:
-                results = {'loss' : self.loss, 
-                           'val_loss' : self.val_loss}                
-            self.update_experiment_results(results)
+            for name in self.experiment['train_metrics']:
+                self.results[name].append(np.float64(logs[name]))
+                self.results['val_'+name].append(np.float64(logs['val_'+name])) 
+
+            self.update_experiment_results(self.results)
