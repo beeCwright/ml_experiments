@@ -57,13 +57,17 @@ class ExperimentNamer:
 class ExperimentRecorder(ExperimentNamer, BaseReader, BaseConnection, Callback):
     '''Class methods for recording experiments in mongo.'''
         
-    def __init__(self, config_path):
+    def __init__(self, config_path, experiment=None):
         
         # Instantiate the experiment namer and name pool
         ExperimentNamer.__init__(self)
 
         # Get the experiment configuration inherited from BaseReader
         self.get_config(config_path)
+        
+        if experiment != None:
+            self.experiment = experiment
+
 
         # Establish connection with mongoDB
         self.establish_db_connection('manager')
@@ -113,7 +117,7 @@ class ExperimentRecorder(ExperimentNamer, BaseReader, BaseConnection, Callback):
         print('Experiment results succesfully recorded.')
 
         
-    def on_epoch_begin(self, epoch):
+    def on_epoch_begin(self, epoch, logs=None):
         if epoch == self.start_recording:
             self.create_experiment_entry()
 
