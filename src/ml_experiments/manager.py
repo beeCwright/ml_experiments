@@ -122,10 +122,9 @@ class ExperimentRecorder(ExperimentNamer, BaseReader, BaseConnection, Callback):
             self.create_experiment_entry()
 
             
-    def on_epoch_end(self, epoch, logs={}):
+    def on_epoch_end(self, epoch, logs={}):        
+        for name in self.experiment['train_metrics']:
+            self.results[name].append(np.float64(logs[name]))
+            self.results['val_'+name].append(np.float64(logs['val_'+name])) 
         if epoch >= self.start_recording:
-            for name in self.experiment['train_metrics']:
-                self.results[name].append(np.float64(logs[name]))
-                self.results['val_'+name].append(np.float64(logs['val_'+name])) 
-
             self.update_experiment_results(self.results)
