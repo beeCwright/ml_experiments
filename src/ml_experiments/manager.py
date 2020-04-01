@@ -80,8 +80,8 @@ class ExperimentRecorder(ExperimentNamer, BaseReader, BaseConnection):
                 self.val_metric_name = 'val_' + self.experiment['train_metric_name']
                 self.train_metric = []
                 self.val_metric = []
-            else:
-                self.record_metrics = False
+        else:
+            self.record_metrics = False
 
         # Get any previous experiment names
         previous_experiments = list(self.col.find())
